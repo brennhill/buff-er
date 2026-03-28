@@ -85,29 +85,27 @@ func safeRun(fn func() (*hook.Output, error)) error {
 	return nil
 }
 
-// checkBreakDue checks if a break is due and returns a warm-up or full suggestion.
+// checkBreakDue checks if a break is due (called from Stop only).
 // Returns (output, handled). If handled is true, the caller should return the output.
+// During warm-up AND past warm-up, Stop shows a soft warning and prevents
+// fall-through to the cooldown check (which would reset the break_due timer).
 func checkBreakDue(store *timing.Store) (*hook.Output, bool) {
 	breakDueStr, _ := store.GetState(timing.StateKeyBreakDue)
 	if breakDueStr == "" {
 		return nil, false
 	}
 
-	breakDueTime, err := time.Parse(time.RFC3339, breakDueStr)
+	_, err := time.Parse(time.RFC3339, breakDueStr)
 	if err != nil {
 		return nil, false
 	}
 
-	elapsed := time.Since(breakDueTime)
-
-	if elapsed < warmUpDuration {
-		// Warm-up phase: soft warning
-		return &hook.Output{SystemMessage: message.BreakWarning()}, true
-	}
-
-	// Past warm-up: fire the full suggestion on PreToolUse only.
-	// Stop events during this phase still show warm-up.
-	return nil, false
+	// break_due is set: show warm-up warning regardless of elapsed time.
+	// The full suggestion fires on the next PreToolUse (after warm-up expires).
+	// Returning handled=true prevents Stop from falling through to the
+	// cooldown check, which would overwrite break_due with a new timestamp
+	// and restart the warm-up window.
+	return &hook.Output{SystemMessage: message.BreakWarning()}, true
 }
 
 // fireBreakSuggestion fires the full exercise suggestion and clears break_due state.

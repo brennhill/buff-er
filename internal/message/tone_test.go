@@ -29,19 +29,6 @@ func TestExerciseSuggestionZeroMinutes(t *testing.T) {
 	}
 }
 
-func TestBreakSuggestion(t *testing.T) {
-	msg := BreakSuggestion(45, "Walk around", "Get up and walk")
-	if !strings.HasPrefix(msg, "buff-er: ") {
-		t.Errorf("expected prefix 'buff-er: ', got %q", msg)
-	}
-	if !strings.Contains(msg, "45") {
-		t.Errorf("expected elapsed minutes in message, got %q", msg)
-	}
-	if !strings.Contains(msg, "Walk around") {
-		t.Errorf("expected exercise name in message, got %q", msg)
-	}
-}
-
 func TestFollowUpWithStreak(t *testing.T) {
 	msg := FollowUp(3)
 	if !strings.HasPrefix(msg, "buff-er: ") {
@@ -59,14 +46,6 @@ func TestFollowUpHighStreak(t *testing.T) {
 	}
 	if !strings.Contains(msg, "10") {
 		t.Errorf("expected streak count 10 in message, got %q", msg)
-	}
-}
-
-func TestBreakSuggestionZeroMinutes(t *testing.T) {
-	// Edge case: should not panic with zero elapsed minutes
-	msg := BreakSuggestion(0, "Stretch", "Quick stretch")
-	if !strings.HasPrefix(msg, "buff-er: ") {
-		t.Errorf("expected prefix 'buff-er: ', got %q", msg)
 	}
 }
 

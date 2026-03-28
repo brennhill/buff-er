@@ -30,20 +30,6 @@ func ExerciseSuggestion(minutes float64, exerciseName, description string) strin
 	return fmt.Sprintf("buff-er: %s %s %s — %s", intro, bridge, exerciseName, description)
 }
 
-// BreakSuggestion returns a varied message for a time-since-break nudge.
-func BreakSuggestion(elapsedMinutes int, exerciseName, description string) string {
-	intros := []string{
-		fmt.Sprintf("You've been at it for %dm without a break.", elapsedMinutes),
-		fmt.Sprintf("%dm straight. Impressive, but your spine disagrees.", elapsedMinutes),
-		fmt.Sprintf("%dm since your last break.", elapsedMinutes),
-		fmt.Sprintf("It's been %dm. Your future self wants you to move.", elapsedMinutes),
-		fmt.Sprintf("%dm of pure focus. Now move.", elapsedMinutes),
-	}
-
-	intro := intros[rand.Intn(len(intros))]
-	return fmt.Sprintf("buff-er: %s Try: %s — %s", intro, exerciseName, description)
-}
-
 // BreakWarning returns a soft heads-up that a break is coming soon.
 func BreakWarning() string {
 	messages := []string{
