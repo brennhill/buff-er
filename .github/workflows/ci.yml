@@ -31,7 +31,7 @@ jobs:
 
       - name: Supply chain check
         run: |
-          cargo install sloppy-joe
+          curl -fsSL https://github.com/brennhill/sloppy-joe/releases/latest/download/sloppy-joe-x86_64-unknown-linux-musl.tar.xz | tar xJ
           mkdir -p /tmp/sj
           cp sloppy-joe.suggested.json /tmp/sj/config.json
-          SLOPPY_JOE_CONFIG=/tmp/sj/config.json sloppy-joe check
+          SLOPPY_JOE_CONFIG=/tmp/sj/config.json ./sloppy-joe check
