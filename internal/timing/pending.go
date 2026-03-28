@@ -2,7 +2,6 @@ package timing
 
 import (
 	"encoding/json"
-	"fmt"
 	"os"
 	"path/filepath"
 	"time"
@@ -10,9 +9,9 @@ import (
 
 // PendingEntry tracks a started tool use that hasn't completed yet.
 type PendingEntry struct {
-	StartTime       time.Time `json:"start_time"`
-	CommandPattern  string    `json:"command_pattern"`
-	ExerciseSuggested bool   `json:"exercise_suggested"`
+	StartTime         time.Time `json:"start_time"`
+	CommandPattern    string    `json:"command_pattern"`
+	ExerciseSuggested bool      `json:"exercise_suggested"`
 }
 
 // PendingStore manages in-flight tool use tracking via temp files.
@@ -22,8 +21,8 @@ type PendingStore struct {
 
 // NewPendingStore creates a pending store for a session.
 func NewPendingStore(sessionID string) *PendingStore {
-	dir := filepath.Join(os.TempDir(), fmt.Sprintf("buff-er-%s", sessionID))
-	os.MkdirAll(dir, 0755)
+	dir := filepath.Join(os.TempDir(), "buff-er-"+sessionID)
+	_ = os.MkdirAll(dir, 0o755)
 	return &PendingStore{dir: dir}
 }
 
@@ -34,7 +33,7 @@ func (p *PendingStore) Set(toolUseID string, entry PendingEntry) error {
 		return err
 	}
 	path := filepath.Join(p.dir, toolUseID+".json")
-	return os.WriteFile(path, data, 0644)
+	return os.WriteFile(path, data, 0o644)
 }
 
 // Get retrieves and removes a pending tool use entry.
@@ -50,10 +49,10 @@ func (p *PendingStore) Get(toolUseID string) (*PendingEntry, error) {
 
 	var entry PendingEntry
 	if err := json.Unmarshal(data, &entry); err != nil {
-		os.Remove(path)
+		_ = os.Remove(path)
 		return nil, err
 	}
 
-	os.Remove(path) // clean up after reading
+	_ = os.Remove(path) // clean up after reading
 	return &entry, nil
 }

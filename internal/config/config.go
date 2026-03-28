@@ -11,10 +11,10 @@ import (
 
 // Config holds user configuration.
 type Config struct {
-	Enabled             bool                `toml:"enabled"`
-	MinTriggerMinutes   float64             `toml:"min_trigger_minutes"`
-	BreakCooldownMinutes int                `toml:"break_cooldown_minutes"`
-	Exercises           []exercise.Exercise `toml:"exercises"`
+	Enabled              bool                `toml:"enabled"`
+	MinTriggerMinutes    float64             `toml:"min_trigger_minutes"`
+	BreakCooldownMinutes int                 `toml:"break_cooldown_minutes"`
+	Exercises            []exercise.Exercise `toml:"exercises"`
 }
 
 // DefaultConfig returns configuration defaults.

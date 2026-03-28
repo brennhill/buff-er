@@ -10,7 +10,7 @@ func TestStoreRecordAndQuery(t *testing.T) {
 	if err != nil {
 		t.Fatalf("OpenStore: %v", err)
 	}
-	defer store.Close()
+	defer func() { _ = store.Close() }()
 
 	now := time.Now()
 
@@ -47,7 +47,7 @@ func TestStoreQueryNoData(t *testing.T) {
 	if err != nil {
 		t.Fatalf("OpenStore: %v", err)
 	}
-	defer store.Close()
+	defer func() { _ = store.Close() }()
 
 	stats, err := store.QueryStats("nonexistent")
 	if err != nil {
@@ -64,14 +64,18 @@ func TestStorePrune(t *testing.T) {
 	if err != nil {
 		t.Fatalf("OpenStore: %v", err)
 	}
-	defer store.Close()
+	defer func() { _ = store.Close() }()
 
 	// Record one old and one new timing
-	old := time.Now().Add(-4 * 24 * time.Hour) // 4 days ago
-	recent := time.Now().Add(-1 * time.Hour)    // 1 hour ago
+	old := time.Now().Add(-4 * 24 * time.Hour)
+	recent := time.Now().Add(-1 * time.Hour)
 
-	store.Record("cargo build", old, 180000)
-	store.Record("cargo build", recent, 200000)
+	if err := store.Record("cargo build", old, 180000); err != nil {
+		t.Fatalf("Record: %v", err)
+	}
+	if err := store.Record("cargo build", recent, 200000); err != nil {
+		t.Fatalf("Record: %v", err)
+	}
 
 	if err := store.Prune(); err != nil {
 		t.Fatalf("Prune: %v", err)
@@ -92,7 +96,7 @@ func TestStoreState(t *testing.T) {
 	if err != nil {
 		t.Fatalf("OpenStore: %v", err)
 	}
-	defer store.Close()
+	defer func() { _ = store.Close() }()
 
 	// Get non-existent key
 	val, err := store.GetState("last_suggestion")

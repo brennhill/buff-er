@@ -27,7 +27,7 @@ func ProjectHash(projectPath string) string {
 // OpenStore opens or creates a SQLite timing database for a project.
 func OpenStore(dataDir, projectHash string) (*Store, error) {
 	dir := filepath.Join(dataDir, projectHash)
-	if err := os.MkdirAll(dir, 0755); err != nil {
+	if err := os.MkdirAll(dir, 0o755); err != nil {
 		return nil, fmt.Errorf("create data dir: %w", err)
 	}
 
@@ -39,12 +39,12 @@ func OpenStore(dataDir, projectHash string) (*Store, error) {
 
 	// Enable WAL mode for concurrent access
 	if _, err := db.Exec("PRAGMA journal_mode=WAL"); err != nil {
-		db.Close()
+		_ = db.Close()
 		return nil, fmt.Errorf("set WAL mode: %w", err)
 	}
 
 	if err := initSchema(db); err != nil {
-		db.Close()
+		_ = db.Close()
 		return nil, fmt.Errorf("init schema: %w", err)
 	}
 
@@ -97,7 +97,7 @@ func (s *Store) QueryStats(pattern string) (*TimingStats, error) {
 	if err != nil {
 		return nil, err
 	}
-	defer rows.Close()
+	defer func() { _ = rows.Close() }()
 
 	var durations []int64
 	for rows.Next() {
@@ -106,6 +106,9 @@ func (s *Store) QueryStats(pattern string) (*TimingStats, error) {
 			return nil, err
 		}
 		durations = append(durations, d)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
 	}
 
 	if len(durations) == 0 {
