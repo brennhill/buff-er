@@ -4,12 +4,13 @@ import (
 	"fmt"
 	"log"
 	"os"
-	"strconv"
 	"time"
 
 	"github.com/brennhill/buff-er/internal/config"
 	"github.com/brennhill/buff-er/internal/exercise"
 	"github.com/brennhill/buff-er/internal/hook"
+	"github.com/brennhill/buff-er/internal/message"
+	"github.com/brennhill/buff-er/internal/notify"
 	"github.com/brennhill/buff-er/internal/timing"
 	"github.com/spf13/cobra"
 )
@@ -136,13 +137,10 @@ func runPreToolUse(_ *cobra.Command, _ []string) error {
 			ex := exercise.Suggest(catalog, est.P75Minutes)
 			if ex != nil {
 				exerciseSuggested = true
-				out = &hook.Output{
-					SystemMessage: fmt.Sprintf(
-						"buff-er: This usually takes ~%.0fm. Perfect time for: %s — %s",
-						est.P75Minutes, ex.Name, ex.Description,
-					),
-				}
+				msg := message.ExerciseSuggestion(est.P75Minutes, ex.Name, ex.Description)
+				out = &hook.Output{SystemMessage: msg}
 				_ = store.SetState(timing.StateKeyLastSuggestion, time.Now().Format(time.RFC3339))
+				notify.Send("buff-er", fmt.Sprintf("~%.0fm wait. Try: %s", est.P75Minutes, ex.Name))
 			}
 		}
 
@@ -206,8 +204,9 @@ func runPostToolUse(_ *cobra.Command, _ []string) error {
 		}
 
 		if entry.ExerciseSuggested {
+			streak, _ := store.IncrementStreak()
 			return &hook.Output{
-				SystemMessage: "buff-er: Done! Did you get that exercise in? (you know the answer)",
+				SystemMessage: message.FollowUp(streak),
 			}, nil
 		}
 
@@ -278,13 +277,10 @@ func runStop(_ *cobra.Command, _ []string) error {
 		_ = store.SetState(timing.StateKeyLastSuggestion, time.Now().Format(time.RFC3339))
 		_ = store.PruneState()
 
-		elapsedStr := strconv.Itoa(int(elapsed.Minutes()))
+		elapsedMin := int(elapsed.Minutes())
+		msg := message.BreakSuggestion(elapsedMin, ex.Name, ex.Description)
+		notify.Send("buff-er", fmt.Sprintf("%dm without a break. Try: %s", elapsedMin, ex.Name))
 
-		return &hook.Output{
-			SystemMessage: fmt.Sprintf(
-				"buff-er: You've been at it for %sm without a break. Time to move! Try: %s — %s",
-				elapsedStr, ex.Name, ex.Description,
-			),
-		}, nil
+		return &hook.Output{SystemMessage: msg}, nil
 	})
 }

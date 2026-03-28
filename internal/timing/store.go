@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"strconv"
 	"time"
 
 	_ "modernc.org/sqlite"
@@ -170,7 +171,41 @@ const (
 	StateKeyLastSuggestion = "last_suggestion"
 	StateKeyLastPrune      = "last_prune"
 	StateKeySessionPrefix  = "session_start_"
+	StateKeyTodayStreak    = "today_streak"
+	StateKeyStreakDate     = "streak_date"
 )
+
+// IncrementStreak bumps today's exercise streak counter. Resets if the date changed.
+func (s *Store) IncrementStreak() (int, error) {
+	today := time.Now().Format("2006-01-02")
+	lastDate, _ := s.GetState(StateKeyStreakDate)
+
+	streak := 0
+	if lastDate == today {
+		streakStr, _ := s.GetState(StateKeyTodayStreak)
+		if n, err := strconv.Atoi(streakStr); err == nil {
+			streak = n
+		}
+	}
+	streak++
+
+	if err := s.SetState(StateKeyStreakDate, today); err != nil {
+		return streak, err
+	}
+	return streak, s.SetState(StateKeyTodayStreak, strconv.Itoa(streak))
+}
+
+// GetStreak returns today's exercise streak count.
+func (s *Store) GetStreak() int {
+	today := time.Now().Format("2006-01-02")
+	lastDate, _ := s.GetState(StateKeyStreakDate)
+	if lastDate != today {
+		return 0
+	}
+	streakStr, _ := s.GetState(StateKeyTodayStreak)
+	n, _ := strconv.Atoi(streakStr)
+	return n
+}
 
 // PruneState removes session_start_ keys whose stored timestamp is older than the prune window,
 // preserving active sessions. Uses Unix epoch comparison to avoid timezone issues.

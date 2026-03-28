@@ -52,6 +52,7 @@ linters-settings:
       - G301  # directory permissions 0755 is fine for non-sensitive data
       - G304  # file path from variable is expected in a CLI tool
       - G306  # file permissions 0644 is fine for config files
+      - G204  # subprocess with variable args is expected in notify package
       - G404  # weak RNG is fine for picking exercises
   gocyclo:
     min-complexity: 15

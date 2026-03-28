@@ -1,0 +1,43 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1280 640" width="1280" height="640">
+  <defs>
+    <linearGradient id="bar-grad" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" style="stop-color:#6366f1" />
+      <stop offset="100%" style="stop-color:#8b5cf6" />
+    </linearGradient>
+    <linearGradient id="weight-grad" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" style="stop-color:#1e1b4b" />
+      <stop offset="100%" style="stop-color:#312e81" />
+    </linearGradient>
+  </defs>
+
+  <!-- Background -->
+  <rect width="1280" height="640" fill="#0f0d1a"/>
+
+  <!-- Dumbbell — centered, scaled up -->
+  <g transform="translate(340, 180)">
+    <!-- Dumbbell bar -->
+    <rect x="80" y="72" width="440" height="20" rx="10" fill="url(#bar-grad)"/>
+
+    <!-- Left weight: terminal prompt -->
+    <rect x="20" y="38" width="90" height="100" rx="12" fill="url(#weight-grad)" stroke="#6366f1" stroke-width="3"/>
+    <text x="65" y="98" font-family="monospace" font-size="36" font-weight="bold" fill="#a5b4fc" text-anchor="middle">&gt;_</text>
+
+    <!-- Right weight -->
+    <rect x="490" y="38" width="90" height="100" rx="12" fill="url(#weight-grad)" stroke="#6366f1" stroke-width="3"/>
+    <rect x="506" y="50" width="58" height="76" rx="6" fill="#4338ca"/>
+    <text x="535" y="96" font-family="monospace" font-size="24" font-weight="bold" fill="#c7d2fe" text-anchor="middle">FIT</text>
+
+    <!-- Inner weight rings -->
+    <rect x="100" y="50" width="22" height="66" rx="5" fill="#4338ca" opacity="0.6"/>
+    <rect x="478" y="50" width="22" height="66" rx="5" fill="#4338ca" opacity="0.6"/>
+  </g>
+
+  <!-- Title -->
+  <text x="640" y="430" font-family="monospace" font-size="72" font-weight="bold" fill="#e0e7ff" text-anchor="middle">buff-er</text>
+
+  <!-- Subtitle -->
+  <text x="640" y="490" font-family="monospace" font-size="28" fill="#6366f1" text-anchor="middle">get buff while you buffer</text>
+
+  <!-- Description -->
+  <text x="640" y="550" font-family="monospace" font-size="20" fill="#4338ca" text-anchor="middle">exercise nudges during AI wait times</text>
+</svg>
