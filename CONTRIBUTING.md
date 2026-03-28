@@ -22,7 +22,7 @@ Hook handlers return `(nil, nil)` to signal "nothing to do." This is the idiomat
 
 ### 5. State keys must use the constants in `timing` package
 
-All keys in the `state` table must use `timing.StateKeyLastSuggestion`, `timing.StateKeyLastPrune`, or `timing.StateKeySessionPrefix`. `PruneState` identifies purgeable keys by prefix — an unknown prefix will leak rows forever.
+All keys in the `state` table must use `timing.StateKeyLastSuggestion`, `timing.StateKeyLastPrune`, `timing.StateKeySessionPrefix`, `timing.StateKeyTodayStreak`, or `timing.StateKeyStreakDate`. `PruneState` identifies purgeable keys by prefix — an unknown prefix will leak rows forever.
 
 ### 6. Settings writes must use `writeSettingsAtomic`
 

@@ -17,7 +17,9 @@ func Send(title, message string) {
 	}
 }
 
-// escapeAppleScript escapes quotes and backslashes for AppleScript strings.
+// escapeAppleScript escapes quotes, backslashes, and control characters for
+// AppleScript string literals. Newlines and carriage returns are replaced with
+// spaces to prevent injection of additional AppleScript statements.
 func escapeAppleScript(s string) string {
 	var out []byte
 	for i := range len(s) {
@@ -26,6 +28,8 @@ func escapeAppleScript(s string) string {
 			out = append(out, '\\', '"')
 		case '\\':
 			out = append(out, '\\', '\\')
+		case '\n', '\r':
+			out = append(out, ' ')
 		default:
 			out = append(out, s[i])
 		}

@@ -37,6 +37,45 @@ func TestSuggestVeryShortWait(t *testing.T) {
 	}
 }
 
+func TestSuggestVeryLongWait(t *testing.T) {
+	catalog := DefaultCatalog()
+
+	// Even with a very long wait, should return an exercise (all exercises fit)
+	ex := Suggest(catalog, 60.0)
+	if ex == nil {
+		t.Fatal("Suggest returned nil for long wait")
+	}
+}
+
+func TestSuggestCustomCatalog(t *testing.T) {
+	catalog := []Exercise{
+		{Name: "Quick stretch", Description: "Stretch", MinMinutes: 1, MaxMinutes: 2, Category: "stretch"},
+	}
+
+	ex := Suggest(catalog, 5.0)
+	if ex == nil {
+		t.Fatal("Suggest returned nil for custom catalog")
+	}
+	if ex.Name != "Quick stretch" {
+		t.Errorf("Name = %q, want 'Quick stretch'", ex.Name)
+	}
+}
+
+func TestSuggestSingleExerciseTooLong(t *testing.T) {
+	catalog := []Exercise{
+		{Name: "Long yoga", Description: "Yoga", MinMinutes: 10, MaxMinutes: 20, Category: "stretch"},
+	}
+
+	// Wait time is shorter than exercise min — should still return it via findShortest fallback
+	ex := Suggest(catalog, 2.0)
+	if ex == nil {
+		t.Fatal("Suggest returned nil when only exercise is too long")
+	}
+	if ex.Name != "Long yoga" {
+		t.Errorf("Name = %q, want 'Long yoga'", ex.Name)
+	}
+}
+
 func TestSuggestEmptyCatalog(t *testing.T) {
 	ex := Suggest(nil, 5.0)
 	if ex != nil {

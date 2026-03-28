@@ -115,6 +115,28 @@ category = "movement"
 	}
 }
 
+func TestClampEnforcesBounds(t *testing.T) {
+	path := filepath.Join(t.TempDir(), "config.toml")
+	content := []byte(`
+min_trigger_minutes = 0.1
+break_cooldown_minutes = 2
+`)
+	if err := os.WriteFile(path, content, 0o644); err != nil {
+		t.Fatal(err)
+	}
+
+	cfg, err := LoadFromPath(path)
+	if err != nil {
+		t.Fatalf("Load with below-minimum values: %v", err)
+	}
+	if cfg.MinTriggerMinutes != 0.5 {
+		t.Errorf("MinTriggerMinutes = %f, want 0.5 (clamped from 0.1)", cfg.MinTriggerMinutes)
+	}
+	if cfg.BreakCooldownMinutes != 5 {
+		t.Errorf("BreakCooldownMinutes = %d, want 5 (clamped from 2)", cfg.BreakCooldownMinutes)
+	}
+}
+
 func TestDefaultConfig(t *testing.T) {
 	cfg := DefaultConfig()
 	if !cfg.Enabled {

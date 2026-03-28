@@ -185,3 +185,69 @@ func TestPruneStateOnlyRemovesOldSessions(t *testing.T) {
 		t.Error("active session should NOT have been pruned")
 	}
 }
+
+func TestIncrementAndGetStreak(t *testing.T) {
+	store, err := OpenStore(t.TempDir(), "test-streak")
+	if err != nil {
+		t.Fatalf("OpenStore: %v", err)
+	}
+	defer func() { _ = store.Close() }()
+
+	// Initially streak should be 0
+	if got := store.GetStreak(); got != 0 {
+		t.Errorf("initial GetStreak = %d, want 0", got)
+	}
+
+	// First increment
+	streak, err := store.IncrementStreak()
+	if err != nil {
+		t.Fatalf("IncrementStreak: %v", err)
+	}
+	if streak != 1 {
+		t.Errorf("first IncrementStreak = %d, want 1", streak)
+	}
+
+	// Second increment
+	streak, err = store.IncrementStreak()
+	if err != nil {
+		t.Fatalf("IncrementStreak: %v", err)
+	}
+	if streak != 2 {
+		t.Errorf("second IncrementStreak = %d, want 2", streak)
+	}
+
+	// GetStreak should match
+	if got := store.GetStreak(); got != 2 {
+		t.Errorf("GetStreak = %d, want 2", got)
+	}
+}
+
+func TestStreakResetsOnNewDay(t *testing.T) {
+	store, err := OpenStore(t.TempDir(), "test-streak-reset")
+	if err != nil {
+		t.Fatalf("OpenStore: %v", err)
+	}
+	defer func() { _ = store.Close() }()
+
+	// Simulate yesterday's streak
+	if err := store.SetState(StateKeyStreakDate, "2020-01-01"); err != nil {
+		t.Fatal(err)
+	}
+	if err := store.SetState(StateKeyTodayStreak, "5"); err != nil {
+		t.Fatal(err)
+	}
+
+	// GetStreak should return 0 since the date doesn't match today
+	if got := store.GetStreak(); got != 0 {
+		t.Errorf("GetStreak for old date = %d, want 0", got)
+	}
+
+	// IncrementStreak should reset to 1
+	streak, err := store.IncrementStreak()
+	if err != nil {
+		t.Fatalf("IncrementStreak: %v", err)
+	}
+	if streak != 1 {
+		t.Errorf("IncrementStreak after date change = %d, want 1", streak)
+	}
+}

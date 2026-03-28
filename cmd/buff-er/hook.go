@@ -139,7 +139,13 @@ func runPreToolUse(_ *cobra.Command, _ []string) error {
 				exerciseSuggested = true
 				msg := message.ExerciseSuggestion(est.P75Minutes, ex.Name, ex.Description)
 				out = &hook.Output{SystemMessage: msg}
-				_ = store.SetState(timing.StateKeyLastSuggestion, time.Now().Format(time.RFC3339))
+				// Set last_suggestion forward by the exercise duration so the break
+				// timer extends: if the exercise is 5min, next break won't fire for
+				// another cooldown period after the exercise would be done.
+				exerciseOffset := time.Duration(ex.MaxMinutes) * time.Minute
+				_ = store.SetState(timing.StateKeyLastSuggestion, time.Now().Add(exerciseOffset).Format(time.RFC3339))
+				// Also reset the session start timer so "Xm without a break" is accurate
+				_ = store.SetState(timing.StateKeySessionPrefix+input.SessionID, time.Now().Add(exerciseOffset).Format(time.RFC3339))
 				notify.Send("buff-er", fmt.Sprintf("~%.0fm wait. Try: %s", est.P75Minutes, ex.Name))
 			}
 		}
@@ -241,20 +247,24 @@ func runStop(_ *cobra.Command, _ []string) error {
 		}
 		defer func() { _ = store.Close() }()
 
+		// Global cooldown: don't suggest if any session got a suggestion recently
 		lastStr, _ := store.GetState(timing.StateKeyLastSuggestion)
 		if lastStr != "" {
 			lastTime, parseErr := time.Parse(time.RFC3339, lastStr)
 			if parseErr == nil {
-				elapsed := time.Since(lastTime)
-				if elapsed.Minutes() < float64(cfg.BreakCooldownMinutes) {
+				if time.Since(lastTime).Minutes() < float64(cfg.BreakCooldownMinutes) {
 					return nil, nil
 				}
 			}
 		}
 
-		sessionStartStr, _ := store.GetState(timing.StateKeySessionPrefix + input.SessionID)
+		// Track time since last activity in this session.
+		// Reset the timer if there's been a long gap (> cooldown period),
+		// so returning after lunch doesn't immediately trigger "180m without a break."
+		sessionKey := timing.StateKeySessionPrefix + input.SessionID
+		sessionStartStr, _ := store.GetState(sessionKey)
 		if sessionStartStr == "" {
-			_ = store.SetState(timing.StateKeySessionPrefix+input.SessionID, time.Now().Format(time.RFC3339))
+			_ = store.SetState(sessionKey, time.Now().Format(time.RFC3339))
 			return nil, nil
 		}
 
@@ -264,6 +274,14 @@ func runStop(_ *cobra.Command, _ []string) error {
 		}
 
 		elapsed := time.Since(sessionStart)
+
+		// If elapsed time is unreasonably large (> 2x cooldown), the user probably
+		// stepped away and came back. Reset the timer instead of showing "199m."
+		maxReasonable := time.Duration(cfg.BreakCooldownMinutes*2) * time.Minute
+		if elapsed > maxReasonable {
+			_ = store.SetState(sessionKey, time.Now().Format(time.RFC3339))
+			return nil, nil
+		}
 		if elapsed.Minutes() < float64(cfg.BreakCooldownMinutes) {
 			return nil, nil
 		}
@@ -274,7 +292,11 @@ func runStop(_ *cobra.Command, _ []string) error {
 			return nil, nil
 		}
 
-		_ = store.SetState(timing.StateKeyLastSuggestion, time.Now().Format(time.RFC3339))
+		// Extend cooldown by the exercise duration
+		exerciseOffset := time.Duration(ex.MaxMinutes) * time.Minute
+		_ = store.SetState(timing.StateKeyLastSuggestion, time.Now().Add(exerciseOffset).Format(time.RFC3339))
+		// Reset session timer so elapsed count restarts after the exercise
+		_ = store.SetState(sessionKey, time.Now().Add(exerciseOffset).Format(time.RFC3339))
 		_ = store.PruneState()
 
 		elapsedMin := int(elapsed.Minutes())

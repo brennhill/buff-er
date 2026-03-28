@@ -169,7 +169,9 @@ func TestPostToolUseRecordsTiming(t *testing.T) {
 		t.Errorf("Count = %d, want 1", stats.Count)
 	}
 
-	// Allow generous tolerance for slow CI runners
+	// Duration is measured from the test's own clock (5 minutes ago),
+	// so CI speed doesn't affect the value — but allow generous tolerance
+	// for scheduling jitter between Set and Get.
 	if stats.AvgMs < 280000 || stats.AvgMs > 330000 {
 		t.Errorf("AvgMs = %d, expected ~300000 (within 280000-330000)", stats.AvgMs)
 	}

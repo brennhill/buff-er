@@ -208,10 +208,8 @@ func (s *Store) GetStreak() int {
 }
 
 // PruneState removes session_start_ keys whose stored timestamp is older than the prune window,
-// preserving active sessions. Uses Unix epoch comparison to avoid timezone issues.
+// preserving active sessions.
 func (s *Store) PruneState() error {
-	// Parse each session_start_ value and delete if older than cutoff.
-	// Can't compare RFC3339 strings directly in SQL due to timezone offset issues.
 	cutoff := time.Now().Add(-pruneAge)
 
 	rows, err := s.db.Query("SELECT key, value FROM state WHERE key LIKE ?", StateKeySessionPrefix+"%")
