@@ -174,6 +174,7 @@ const (
 	StateKeyTodayStreak     = "today_streak"
 	StateKeyStreakDate      = "streak_date"
 	StateKeyPendingFollowUp = "pending_followup"
+	StateKeyBreakDue        = "break_due"
 )
 
 // IncrementStreak bumps today's exercise streak counter. Resets if the date changed.

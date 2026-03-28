@@ -15,8 +15,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
-// getCatalog converts config exercises to the exercise package type and returns
-// the appropriate catalog.
+// getCatalog converts config exercises to the exercise package type.
 func getCatalog(cfg config.Config) []exercise.Exercise {
 	custom := make([]exercise.ConfigExercise, len(cfg.Exercises))
 	for i, e := range cfg.Exercises {
@@ -30,6 +29,8 @@ func getCatalog(cfg config.Config) []exercise.Exercise {
 	}
 	return exercise.GetCatalog(custom)
 }
+
+const warmUpDuration = 60 * time.Second
 
 var hookCmd = &cobra.Command{
 	Use:   "hook",
@@ -66,9 +67,7 @@ func init() {
 	hookCmd.AddCommand(stopCmd)
 }
 
-// safeRun wraps a hook handler to ensure it never returns an error
-// (which would cause a non-zero exit code and break the AI workflow).
-// Errors are logged to stderr and a systemMessage is shown if appropriate.
+// safeRun wraps a hook handler to ensure it never returns an error.
 func safeRun(fn func() (*hook.Output, error)) error {
 	out, err := fn()
 	if err != nil {
@@ -84,6 +83,97 @@ func safeRun(fn func() (*hook.Output, error)) error {
 		log.Printf("buff-er: failed to write output: %v", writeErr)
 	}
 	return nil
+}
+
+// checkBreakDue checks if a break is due and returns a warm-up or full suggestion.
+// Returns (output, handled). If handled is true, the caller should return the output.
+func checkBreakDue(store *timing.Store) (*hook.Output, bool) {
+	breakDueStr, _ := store.GetState(timing.StateKeyBreakDue)
+	if breakDueStr == "" {
+		return nil, false
+	}
+
+	breakDueTime, err := time.Parse(time.RFC3339, breakDueStr)
+	if err != nil {
+		return nil, false
+	}
+
+	elapsed := time.Since(breakDueTime)
+
+	if elapsed < warmUpDuration {
+		// Warm-up phase: soft warning
+		return &hook.Output{SystemMessage: message.BreakWarning()}, true
+	}
+
+	// Past warm-up: fire the full suggestion on PreToolUse only.
+	// Stop events during this phase still show warm-up.
+	return nil, false
+}
+
+// fireBreakSuggestion fires the full exercise suggestion and clears break_due state.
+func fireBreakSuggestion(store *timing.Store, cfg config.Config, sessionID string) *hook.Output {
+	catalog := getCatalog(cfg)
+	ex := exercise.Suggest(catalog, 5.0)
+	if ex == nil {
+		return nil
+	}
+
+	// Clear break_due
+	_ = store.SetState(timing.StateKeyBreakDue, "")
+
+	// Extend cooldown by exercise duration
+	exerciseOffset := time.Duration(ex.MaxMinutes) * time.Minute
+	_ = store.SetState(timing.StateKeyLastSuggestion, time.Now().Add(exerciseOffset).Format(time.RFC3339))
+	sessionKey := timing.StateKeySessionPrefix + sessionID
+	_ = store.SetState(sessionKey, time.Now().Add(exerciseOffset).Format(time.RFC3339))
+	_ = store.PruneState()
+	_ = store.SetState(timing.StateKeyPendingFollowUp, "true")
+
+	msg := message.BreakNow(ex.Name, ex.Description)
+	notify.Send("buff-er", fmt.Sprintf("Step away. Try: %s", ex.Name))
+	return &hook.Output{SystemMessage: msg}
+}
+
+// handleBreakDue checks if a break is due on PreToolUse.
+// Returns (output, exerciseFired). If exerciseFired, caller should return immediately.
+// If output is non-nil but exerciseFired is false, it's a warm-up warning.
+func handleBreakDue(store *timing.Store, cfg config.Config, sessionID string) (*hook.Output, bool) {
+	breakDueStr, _ := store.GetState(timing.StateKeyBreakDue)
+	if breakDueStr == "" {
+		return nil, false
+	}
+
+	breakDueTime, err := time.Parse(time.RFC3339, breakDueStr)
+	if err != nil {
+		return nil, false
+	}
+
+	if time.Since(breakDueTime) >= warmUpDuration {
+		return fireBreakSuggestion(store, cfg, sessionID), true
+	}
+
+	return &hook.Output{SystemMessage: message.BreakWarning()}, false
+}
+
+// handleCommandEstimation checks if a command is known to be slow and suggests exercise.
+func handleCommandEstimation(store *timing.Store, cfg config.Config, est *timing.Estimate, sessionID string) *hook.Output {
+	if !est.Confident || est.P75Minutes < cfg.MinTriggerMinutes {
+		return nil
+	}
+
+	catalog := getCatalog(cfg)
+	ex := exercise.Suggest(catalog, est.P75Minutes)
+	if ex == nil {
+		return nil
+	}
+
+	msg := message.ExerciseSuggestion(est.P75Minutes, ex.Name, ex.Description)
+	exerciseOffset := time.Duration(ex.MaxMinutes) * time.Minute
+	_ = store.SetState(timing.StateKeyLastSuggestion, time.Now().Add(exerciseOffset).Format(time.RFC3339))
+	_ = store.SetState(timing.StateKeySessionPrefix+sessionID, time.Now().Add(exerciseOffset).Format(time.RFC3339))
+	_ = store.SetState(timing.StateKeyBreakDue, "")
+	notify.Send("buff-er", fmt.Sprintf("~%.0fm wait. Try: %s", est.P75Minutes, ex.Name))
+	return &hook.Output{SystemMessage: msg}
 }
 
 func runPreToolUse(_ *cobra.Command, _ []string) error {
@@ -124,30 +214,28 @@ func runPreToolUse(_ *cobra.Command, _ []string) error {
 
 		pending := timing.NewPendingStore(input.SessionID)
 
+		// Check if break is due — if past warm-up, fire the full suggestion now
+		breakOut, exerciseFired := handleBreakDue(store, cfg, input.SessionID)
+		if exerciseFired {
+			_ = pending.Set(input.ToolUseID, timing.PendingEntry{
+				StartTime:         time.Now(),
+				CommandPattern:    pattern,
+				ExerciseSuggested: false,
+			})
+			return breakOut, nil
+		}
+
 		est, err := timing.EstimateDuration(store, pattern)
 		if err != nil {
 			return nil, fmt.Errorf("estimate: %w", err)
 		}
 
-		exerciseSuggested := false
-		var out *hook.Output
+		out := handleCommandEstimation(store, cfg, est, input.SessionID)
+		exerciseSuggested := out != nil
 
-		if est.Confident && est.P75Minutes >= cfg.MinTriggerMinutes {
-			catalog := getCatalog(cfg)
-			ex := exercise.Suggest(catalog, est.P75Minutes)
-			if ex != nil {
-				exerciseSuggested = true
-				msg := message.ExerciseSuggestion(est.P75Minutes, ex.Name, ex.Description)
-				out = &hook.Output{SystemMessage: msg}
-				// Set last_suggestion forward by the exercise duration so the break
-				// timer extends: if the exercise is 5min, next break won't fire for
-				// another cooldown period after the exercise would be done.
-				exerciseOffset := time.Duration(ex.MaxMinutes) * time.Minute
-				_ = store.SetState(timing.StateKeyLastSuggestion, time.Now().Add(exerciseOffset).Format(time.RFC3339))
-				// Also reset the session start timer so "Xm without a break" is accurate
-				_ = store.SetState(timing.StateKeySessionPrefix+input.SessionID, time.Now().Add(exerciseOffset).Format(time.RFC3339))
-				notify.Send("buff-er", fmt.Sprintf("~%.0fm wait. Try: %s", est.P75Minutes, ex.Name))
-			}
+		// If we're in warm-up and didn't fire a command-based suggestion, show the warning
+		if out == nil && breakOut != nil {
+			out = breakOut
 		}
 
 		_ = pending.Set(input.ToolUseID, timing.PendingEntry{
@@ -195,7 +283,7 @@ func runPostToolUse(_ *cobra.Command, _ []string) error {
 			return nil, fmt.Errorf("record timing: %w", err)
 		}
 
-		// Only prune once per hour to avoid running DELETE on every call
+		// Only prune once per hour
 		lastPruneStr, _ := store.GetState(timing.StateKeyLastPrune)
 		shouldPrune := true
 		if lastPruneStr != "" {
@@ -247,7 +335,7 @@ func runStop(_ *cobra.Command, _ []string) error {
 		}
 		defer func() { _ = store.Close() }()
 
-		// Check if a previous Stop suggested an exercise and we owe a follow-up
+		// Check if we owe a follow-up from a previous suggestion
 		pendingFollowUp, _ := store.GetState(timing.StateKeyPendingFollowUp)
 		if pendingFollowUp == "true" {
 			_ = store.SetState(timing.StateKeyPendingFollowUp, "")
@@ -257,7 +345,12 @@ func runStop(_ *cobra.Command, _ []string) error {
 			}, nil
 		}
 
-		// Global cooldown: don't suggest if any session got a suggestion recently
+		// If break_due is already set, show warm-up message
+		if out, handled := checkBreakDue(store); handled {
+			return out, nil
+		}
+
+		// Global cooldown: don't trigger if a suggestion fired recently
 		lastStr, _ := store.GetState(timing.StateKeyLastSuggestion)
 		if lastStr != "" {
 			lastTime, parseErr := time.Parse(time.RFC3339, lastStr)
@@ -268,9 +361,7 @@ func runStop(_ *cobra.Command, _ []string) error {
 			}
 		}
 
-		// Track time since last activity in this session.
-		// Reset the timer if there's been a long gap (> cooldown period),
-		// so returning after lunch doesn't immediately trigger "180m without a break."
+		// Per-session start time
 		sessionKey := timing.StateKeySessionPrefix + input.SessionID
 		sessionStartStr, _ := store.GetState(sessionKey)
 		if sessionStartStr == "" {
@@ -285,37 +376,20 @@ func runStop(_ *cobra.Command, _ []string) error {
 
 		elapsed := time.Since(sessionStart)
 
-		// If elapsed time is unreasonably large (> 2x cooldown), the user probably
-		// stepped away and came back. Reset the timer instead of showing "199m."
+		// Reset if user was away too long
 		maxReasonable := time.Duration(cfg.BreakCooldownMinutes*2) * time.Minute
 		if elapsed > maxReasonable {
 			_ = store.SetState(sessionKey, time.Now().Format(time.RFC3339))
 			return nil, nil
 		}
+
 		if elapsed.Minutes() < float64(cfg.BreakCooldownMinutes) {
 			return nil, nil
 		}
 
-		catalog := getCatalog(cfg)
-		ex := exercise.Suggest(catalog, 5.0)
-		if ex == nil {
-			return nil, nil
-		}
-
-		// Extend cooldown by the exercise duration
-		exerciseOffset := time.Duration(ex.MaxMinutes) * time.Minute
-		_ = store.SetState(timing.StateKeyLastSuggestion, time.Now().Add(exerciseOffset).Format(time.RFC3339))
-		// Reset session timer so elapsed count restarts after the exercise
-		_ = store.SetState(sessionKey, time.Now().Add(exerciseOffset).Format(time.RFC3339))
-		_ = store.PruneState()
-
-		// Set follow-up flag so the next Stop event asks "did you do it?"
-		_ = store.SetState(timing.StateKeyPendingFollowUp, "true")
-
-		elapsedMin := int(elapsed.Minutes())
-		msg := message.BreakSuggestion(elapsedMin, ex.Name, ex.Description)
-		notify.Send("buff-er", fmt.Sprintf("%dm without a break. Try: %s", elapsedMin, ex.Name))
-
-		return &hook.Output{SystemMessage: msg}, nil
+		// Break is due! Set the flag to start the warm-up phase.
+		// The actual suggestion will fire on the next PreToolUse after 60s.
+		_ = store.SetState(timing.StateKeyBreakDue, time.Now().Format(time.RFC3339))
+		return &hook.Output{SystemMessage: message.BreakWarning()}, nil
 	})
 }

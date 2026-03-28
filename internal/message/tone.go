@@ -44,6 +44,30 @@ func BreakSuggestion(elapsedMinutes int, exerciseName, description string) strin
 	return fmt.Sprintf("buff-er: %s Try: %s — %s", intro, exerciseName, description)
 }
 
+// BreakWarning returns a soft heads-up that a break is coming soon.
+func BreakWarning() string {
+	messages := []string{
+		"You should take a break soon.",
+		"Break incoming. Start wrapping up.",
+		"Heads up — time to move soon.",
+		"Your body is going to want a break shortly.",
+		"Almost time to step away. Finish up your thought.",
+	}
+	return "buff-er: " + messages[rand.Intn(len(messages))]
+}
+
+// BreakNow returns the full exercise suggestion when the user kicks off a new task
+// and should step away while it runs.
+func BreakNow(exerciseName, description string) string {
+	messages := []string{
+		fmt.Sprintf("Things are in flight. Step away and do: %s — %s", exerciseName, description),
+		fmt.Sprintf("AI's working, you should be stretching. Try: %s — %s", exerciseName, description),
+		fmt.Sprintf("Let it run. Go do: %s — %s", exerciseName, description),
+		fmt.Sprintf("Your tasks are running. Perfect time for: %s — %s", exerciseName, description),
+	}
+	return "buff-er: " + messages[rand.Intn(len(messages))]
+}
+
 // FollowUp returns a varied message after a suggested command finishes.
 func FollowUp(streak int) string {
 	if streak > 0 {
