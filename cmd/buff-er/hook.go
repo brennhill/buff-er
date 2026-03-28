@@ -247,6 +247,16 @@ func runStop(_ *cobra.Command, _ []string) error {
 		}
 		defer func() { _ = store.Close() }()
 
+		// Check if a previous Stop suggested an exercise and we owe a follow-up
+		pendingFollowUp, _ := store.GetState(timing.StateKeyPendingFollowUp)
+		if pendingFollowUp == "true" {
+			_ = store.SetState(timing.StateKeyPendingFollowUp, "")
+			streak, _ := store.IncrementStreak()
+			return &hook.Output{
+				SystemMessage: message.FollowUp(streak),
+			}, nil
+		}
+
 		// Global cooldown: don't suggest if any session got a suggestion recently
 		lastStr, _ := store.GetState(timing.StateKeyLastSuggestion)
 		if lastStr != "" {
@@ -298,6 +308,9 @@ func runStop(_ *cobra.Command, _ []string) error {
 		// Reset session timer so elapsed count restarts after the exercise
 		_ = store.SetState(sessionKey, time.Now().Add(exerciseOffset).Format(time.RFC3339))
 		_ = store.PruneState()
+
+		// Set follow-up flag so the next Stop event asks "did you do it?"
+		_ = store.SetState(timing.StateKeyPendingFollowUp, "true")
 
 		elapsedMin := int(elapsed.Minutes())
 		msg := message.BreakSuggestion(elapsedMin, ex.Name, ex.Description)

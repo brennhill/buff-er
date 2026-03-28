@@ -168,11 +168,12 @@ func (s *Store) GetState(key string) (string, error) {
 
 // State key prefixes — all state keys must use one of these.
 const (
-	StateKeyLastSuggestion = "last_suggestion"
-	StateKeyLastPrune      = "last_prune"
-	StateKeySessionPrefix  = "session_start_"
-	StateKeyTodayStreak    = "today_streak"
-	StateKeyStreakDate     = "streak_date"
+	StateKeyLastSuggestion  = "last_suggestion"
+	StateKeyLastPrune       = "last_prune"
+	StateKeySessionPrefix   = "session_start_"
+	StateKeyTodayStreak     = "today_streak"
+	StateKeyStreakDate      = "streak_date"
+	StateKeyPendingFollowUp = "pending_followup"
 )
 
 // IncrementStreak bumps today's exercise streak counter. Resets if the date changed.
