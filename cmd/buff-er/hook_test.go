@@ -99,7 +99,7 @@ func TestPreToolUseWithEnoughData(t *testing.T) {
 	}
 
 	cfg := config.DefaultConfig()
-	catalog := config.GetExerciseCatalog(cfg)
+	catalog := getCatalog(cfg)
 	ex := exercise.Suggest(catalog, est.P75Minutes)
 	if ex == nil {
 		t.Error("should suggest an exercise")
@@ -174,6 +174,7 @@ func TestPostToolUseRecordsTiming(t *testing.T) {
 	}
 }
 
-func init() {
+func TestMain(m *testing.M) {
 	_ = os.Setenv("XDG_CONFIG_HOME", os.TempDir())
+	os.Exit(m.Run())
 }

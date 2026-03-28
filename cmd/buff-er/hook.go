@@ -14,6 +14,22 @@ import (
 	"github.com/spf13/cobra"
 )
 
+// getCatalog converts config exercises to the exercise package type and returns
+// the appropriate catalog.
+func getCatalog(cfg config.Config) []exercise.Exercise {
+	custom := make([]exercise.ConfigExercise, len(cfg.Exercises))
+	for i, e := range cfg.Exercises {
+		custom[i] = exercise.ConfigExercise{
+			Name:        e.Name,
+			Description: e.Description,
+			MinMinutes:  e.MinMinutes,
+			MaxMinutes:  e.MaxMinutes,
+			Category:    e.Category,
+		}
+	}
+	return exercise.GetCatalog(custom)
+}
+
 var hookCmd = &cobra.Command{
 	Use:   "hook",
 	Short: "Hook handlers for Claude Code events",
@@ -116,7 +132,7 @@ func runPreToolUse(_ *cobra.Command, _ []string) error {
 		var out *hook.Output
 
 		if est.Confident && est.P75Minutes >= cfg.MinTriggerMinutes {
-			catalog := config.GetExerciseCatalog(cfg)
+			catalog := getCatalog(cfg)
 			ex := exercise.Suggest(catalog, est.P75Minutes)
 			if ex != nil {
 				exerciseSuggested = true
@@ -175,8 +191,19 @@ func runPostToolUse(_ *cobra.Command, _ []string) error {
 			return nil, fmt.Errorf("record timing: %w", err)
 		}
 
-		_ = store.Prune()
-		timing.CleanupStale()
+		// Only prune once per hour to avoid running DELETE on every call
+		lastPruneStr, _ := store.GetState("last_prune")
+		shouldPrune := true
+		if lastPruneStr != "" {
+			if lastPrune, parseErr := time.Parse(time.RFC3339, lastPruneStr); parseErr == nil {
+				shouldPrune = time.Since(lastPrune) >= time.Hour
+			}
+		}
+		if shouldPrune {
+			_ = store.Prune()
+			_ = store.SetState("last_prune", time.Now().Format(time.RFC3339))
+			timing.CleanupStale()
+		}
 
 		if entry.ExerciseSuggested {
 			return &hook.Output{
@@ -242,7 +269,7 @@ func runStop(_ *cobra.Command, _ []string) error {
 			return nil, nil
 		}
 
-		catalog := config.GetExerciseCatalog(cfg)
+		catalog := getCatalog(cfg)
 		ex := exercise.Suggest(catalog, 5.0)
 		if ex == nil {
 			return nil, nil

@@ -5,16 +5,24 @@ import (
 	"path/filepath"
 
 	"github.com/adrg/xdg"
-	"github.com/brennhill/buff-er/internal/exercise"
 	toml "github.com/pelletier/go-toml/v2"
 )
 
+// Exercise mirrors the exercise type for config parsing only.
+type Exercise struct {
+	Name        string `toml:"name"`
+	Description string `toml:"description"`
+	MinMinutes  int    `toml:"min_minutes"`
+	MaxMinutes  int    `toml:"max_minutes"`
+	Category    string `toml:"category"`
+}
+
 // Config holds user configuration.
 type Config struct {
-	Enabled              bool                `toml:"enabled"`
-	MinTriggerMinutes    float64             `toml:"min_trigger_minutes"`
-	BreakCooldownMinutes int                 `toml:"break_cooldown_minutes"`
-	Exercises            []exercise.Exercise `toml:"exercises"`
+	Enabled              bool       `toml:"enabled"`
+	MinTriggerMinutes    float64    `toml:"min_trigger_minutes"`
+	BreakCooldownMinutes int        `toml:"break_cooldown_minutes"`
+	Exercises            []Exercise `toml:"exercises"`
 }
 
 // DefaultConfig returns configuration defaults.
@@ -39,9 +47,16 @@ func ConfigPath() string {
 // Load reads the config from disk, returning defaults if the file doesn't exist
 // or can't be parsed. Returns the config and any error (for logging).
 func Load() (Config, error) {
+	return LoadFromPath(ConfigPath())
+}
+
+// LoadFromPath reads the config from the given path, returning defaults if the
+// file doesn't exist. On parse errors, returns the partially-parsed config
+// (preserving any fields that were successfully read) along with the error.
+func LoadFromPath(path string) (Config, error) {
 	cfg := DefaultConfig()
 
-	data, err := os.ReadFile(ConfigPath())
+	data, err := os.ReadFile(path)
 	if err != nil {
 		if os.IsNotExist(err) {
 			return cfg, nil // no config file is fine
@@ -50,16 +65,8 @@ func Load() (Config, error) {
 	}
 
 	if err := toml.Unmarshal(data, &cfg); err != nil {
-		return DefaultConfig(), err
+		return cfg, err
 	}
 
 	return cfg, nil
-}
-
-// GetExerciseCatalog returns the exercise catalog, merging user config with defaults.
-func GetExerciseCatalog(cfg Config) []exercise.Exercise {
-	if len(cfg.Exercises) > 0 {
-		return cfg.Exercises
-	}
-	return exercise.DefaultCatalog()
 }

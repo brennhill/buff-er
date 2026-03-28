@@ -9,6 +9,28 @@ type Exercise struct {
 	Category    string `json:"category" toml:"category"` // stretch, strength, movement
 }
 
+// ConfigExercise mirrors the config-layer exercise struct for decoupling.
+type ConfigExercise struct {
+	Name        string
+	Description string
+	MinMinutes  int
+	MaxMinutes  int
+	Category    string
+}
+
+// GetCatalog returns the exercise catalog, using custom exercises if provided,
+// otherwise falling back to the default catalog.
+func GetCatalog(custom []ConfigExercise) []Exercise {
+	if len(custom) > 0 {
+		result := make([]Exercise, len(custom))
+		for i, c := range custom {
+			result[i] = Exercise(c)
+		}
+		return result
+	}
+	return DefaultCatalog()
+}
+
 // DefaultCatalog returns the built-in exercise list.
 func DefaultCatalog() []Exercise {
 	return []Exercise{
