@@ -25,7 +25,7 @@ buff-er is a [Claude Code](https://docs.anthropic.com/en/docs/claude-code) hook 
 buff-er: This usually takes ~5m. Perfect time for: Desk pushups — 10 pushups against your desk edge. Rest. Repeat.
 ```
 
-3. **Break timer**: If you've been working 30+ minutes without a break (even with short commands), buff-er suggests movement at the next natural pause.
+3. **Break timer**: If you've been working 52+ minutes without a break, buff-er gently warns you ("break incoming"), then suggests an exercise when the next command kicks off — so the AI keeps working while you move. The 52-minute default is based on a [DeskTime study of 36,000+ users](https://cool-timer.com/blog-pages/pomodoro-vs-52-17-method) showing the most productive workers focus for ~52 minutes then take 17-minute breaks.
 
 4. **Follow-up**: When a suggested command finishes:
 
