@@ -142,7 +142,7 @@ func runPreToolUse(_ *cobra.Command, _ []string) error {
 						est.P75Minutes, ex.Name, ex.Description,
 					),
 				}
-				_ = store.SetState("last_suggestion", time.Now().Format(time.RFC3339))
+				_ = store.SetState(timing.StateKeyLastSuggestion, time.Now().Format(time.RFC3339))
 			}
 		}
 
@@ -192,7 +192,7 @@ func runPostToolUse(_ *cobra.Command, _ []string) error {
 		}
 
 		// Only prune once per hour to avoid running DELETE on every call
-		lastPruneStr, _ := store.GetState("last_prune")
+		lastPruneStr, _ := store.GetState(timing.StateKeyLastPrune)
 		shouldPrune := true
 		if lastPruneStr != "" {
 			if lastPrune, parseErr := time.Parse(time.RFC3339, lastPruneStr); parseErr == nil {
@@ -201,7 +201,7 @@ func runPostToolUse(_ *cobra.Command, _ []string) error {
 		}
 		if shouldPrune {
 			_ = store.Prune()
-			_ = store.SetState("last_prune", time.Now().Format(time.RFC3339))
+			_ = store.SetState(timing.StateKeyLastPrune, time.Now().Format(time.RFC3339))
 			timing.CleanupStale()
 		}
 
@@ -242,7 +242,7 @@ func runStop(_ *cobra.Command, _ []string) error {
 		}
 		defer func() { _ = store.Close() }()
 
-		lastStr, _ := store.GetState("last_suggestion")
+		lastStr, _ := store.GetState(timing.StateKeyLastSuggestion)
 		if lastStr != "" {
 			lastTime, parseErr := time.Parse(time.RFC3339, lastStr)
 			if parseErr == nil {
@@ -253,9 +253,9 @@ func runStop(_ *cobra.Command, _ []string) error {
 			}
 		}
 
-		sessionStartStr, _ := store.GetState("session_start_" + input.SessionID)
+		sessionStartStr, _ := store.GetState(timing.StateKeySessionPrefix + input.SessionID)
 		if sessionStartStr == "" {
-			_ = store.SetState("session_start_"+input.SessionID, time.Now().Format(time.RFC3339))
+			_ = store.SetState(timing.StateKeySessionPrefix+input.SessionID, time.Now().Format(time.RFC3339))
 			return nil, nil
 		}
 
@@ -275,7 +275,7 @@ func runStop(_ *cobra.Command, _ []string) error {
 			return nil, nil
 		}
 
-		_ = store.SetState("last_suggestion", time.Now().Format(time.RFC3339))
+		_ = store.SetState(timing.StateKeyLastSuggestion, time.Now().Format(time.RFC3339))
 		_ = store.PruneState()
 
 		elapsedStr := strconv.Itoa(int(elapsed.Minutes()))

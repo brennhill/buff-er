@@ -19,12 +19,12 @@ func TestStopNoSuggestionWithinCooldown(t *testing.T) {
 	defer func() { _ = store.Close() }()
 
 	// Set last suggestion to now (within cooldown)
-	if err := store.SetState("last_suggestion", time.Now().Format(time.RFC3339)); err != nil {
+	if err := store.SetState(timing.StateKeyLastSuggestion, time.Now().Format(time.RFC3339)); err != nil {
 		t.Fatal(err)
 	}
 
 	cfg := config.DefaultConfig()
-	lastStr, _ := store.GetState("last_suggestion")
+	lastStr, _ := store.GetState(timing.StateKeyLastSuggestion)
 	if lastStr == "" {
 		t.Fatal("last_suggestion should be set")
 	}
@@ -54,12 +54,12 @@ func TestStopSuggestsAfterCooldown(t *testing.T) {
 
 	// Set session start to well past the cooldown
 	sessionStart := time.Now().Add(-60 * time.Minute)
-	if err := store.SetState("session_start_"+sessionID, sessionStart.Format(time.RFC3339)); err != nil {
+	if err := store.SetState(timing.StateKeySessionPrefix+sessionID, sessionStart.Format(time.RFC3339)); err != nil {
 		t.Fatal(err)
 	}
 
 	cfg := config.DefaultConfig()
-	sessionStartStr, _ := store.GetState("session_start_" + sessionID)
+	sessionStartStr, _ := store.GetState(timing.StateKeySessionPrefix + sessionID)
 	if sessionStartStr == "" {
 		t.Fatal("session_start should be set")
 	}
@@ -94,7 +94,7 @@ func TestStopFirstSessionRecordsStart(t *testing.T) {
 	sessionID := "new-session"
 
 	// No session_start should exist yet
-	val, err := store.GetState("session_start_" + sessionID)
+	val, err := store.GetState(timing.StateKeySessionPrefix + sessionID)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -103,11 +103,11 @@ func TestStopFirstSessionRecordsStart(t *testing.T) {
 	}
 
 	// First stop call should record the start time
-	if err := store.SetState("session_start_"+sessionID, time.Now().Format(time.RFC3339)); err != nil {
+	if err := store.SetState(timing.StateKeySessionPrefix+sessionID, time.Now().Format(time.RFC3339)); err != nil {
 		t.Fatal(err)
 	}
 
-	val, err = store.GetState("session_start_" + sessionID)
+	val, err = store.GetState(timing.StateKeySessionPrefix + sessionID)
 	if err != nil {
 		t.Fatal(err)
 	}

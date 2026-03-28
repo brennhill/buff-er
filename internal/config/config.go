@@ -65,8 +65,20 @@ func LoadFromPath(path string) (Config, error) {
 	}
 
 	if err := toml.Unmarshal(data, &cfg); err != nil {
+		clamp(&cfg)
 		return cfg, err
 	}
 
+	clamp(&cfg)
 	return cfg, nil
+}
+
+// clamp ensures config values are within sane bounds.
+func clamp(cfg *Config) {
+	if cfg.MinTriggerMinutes < 0.5 {
+		cfg.MinTriggerMinutes = 0.5
+	}
+	if cfg.BreakCooldownMinutes < 5 {
+		cfg.BreakCooldownMinutes = 5
+	}
 }

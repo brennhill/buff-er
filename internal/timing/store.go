@@ -165,12 +165,51 @@ func (s *Store) GetState(key string) (string, error) {
 	return value, err
 }
 
+// State key prefixes — all state keys must use one of these.
+const (
+	StateKeyLastSuggestion = "last_suggestion"
+	StateKeyLastPrune      = "last_prune"
+	StateKeySessionPrefix  = "session_start_"
+)
+
 // PruneState removes session_start_ keys whose stored timestamp is older than the prune window,
-// preserving active sessions.
+// preserving active sessions. Uses Unix epoch comparison to avoid timezone issues.
 func (s *Store) PruneState() error {
-	cutoff := time.Now().Add(-pruneAge).Format(time.RFC3339)
-	_, err := s.db.Exec("DELETE FROM state WHERE key LIKE 'session_start_%' AND value < ?", cutoff)
-	return err
+	// Parse each session_start_ value and delete if older than cutoff.
+	// Can't compare RFC3339 strings directly in SQL due to timezone offset issues.
+	cutoff := time.Now().Add(-pruneAge)
+
+	rows, err := s.db.Query("SELECT key, value FROM state WHERE key LIKE ?", StateKeySessionPrefix+"%")
+	if err != nil {
+		return err
+	}
+	defer func() { _ = rows.Close() }()
+
+	var keysToDelete []string
+	for rows.Next() {
+		var key, value string
+		if err := rows.Scan(&key, &value); err != nil {
+			continue
+		}
+		t, err := time.Parse(time.RFC3339, value)
+		if err != nil {
+			keysToDelete = append(keysToDelete, key)
+			continue
+		}
+		if t.Before(cutoff) {
+			keysToDelete = append(keysToDelete, key)
+		}
+	}
+	if err := rows.Err(); err != nil {
+		return err
+	}
+
+	for _, key := range keysToDelete {
+		if _, err := s.db.Exec("DELETE FROM state WHERE key = ?", key); err != nil {
+			return err
+		}
+	}
+	return nil
 }
 
 // Close closes the database connection.
