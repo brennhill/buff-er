@@ -67,7 +67,7 @@ func TestStorePrune(t *testing.T) {
 	defer func() { _ = store.Close() }()
 
 	// Record one old and one new timing
-	old := time.Now().Add(-4 * 24 * time.Hour)
+	old := time.Now().Add(-8 * 24 * time.Hour)
 	recent := time.Now().Add(-1 * time.Hour)
 
 	if err := store.Record("cargo build", old, 180000); err != nil {
@@ -153,7 +153,7 @@ func TestPruneStateOnlyRemovesOldSessions(t *testing.T) {
 	defer func() { _ = store.Close() }()
 
 	// Set a stale session (4 days old) and a fresh one (now)
-	staleTime := time.Now().Add(-4 * 24 * time.Hour).Format(time.RFC3339)
+	staleTime := time.Now().Add(-8 * 24 * time.Hour).Format(time.RFC3339)
 	freshTime := time.Now().Format(time.RFC3339)
 
 	if err := store.SetState("session_start_stale-session", staleTime); err != nil {

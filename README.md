@@ -91,7 +91,7 @@ If no config file exists, buff-er uses sensible defaults with 18 built-in exerci
 - **Config**: `~/.config/buff-er/config.toml`
 - **Pending state**: `$TMPDIR/buff-er-{session}/` (cleaned up automatically)
 
-Timing data uses a 3-day sliding window — old records are pruned automatically.
+Timing data uses a 7-day sliding window — old records are pruned automatically.
 
 ## Design principles
 

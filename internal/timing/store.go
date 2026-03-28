@@ -12,7 +12,7 @@ import (
 	_ "modernc.org/sqlite"
 )
 
-const pruneAge = 3 * 24 * time.Hour // 3-day sliding window
+const pruneAge = 7 * 24 * time.Hour // 7-day sliding window
 
 // Store manages timing data in SQLite.
 type Store struct {
