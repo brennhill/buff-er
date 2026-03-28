@@ -1,0 +1,39 @@
+{
+  "canonical": {
+    "go": {
+      "github.com/spf13/cobra": [
+        "github.com/urfave/cli",
+        "github.com/urfave/cli/v2",
+        "github.com/alecthomas/kong",
+        "github.com/jessevdk/go-flags"
+      ],
+      "modernc.org/sqlite": [
+        "github.com/mattn/go-sqlite3",
+        "crawshaw.io/sqlite"
+      ],
+      "github.com/pelletier/go-toml/v2": [
+        "github.com/BurntSushi/toml",
+        "github.com/spf13/viper"
+      ],
+      "github.com/adrg/xdg": [
+        "github.com/OpenPeeDeeP/xdg"
+      ],
+      "github.com/google/uuid": [
+        "github.com/satori/go.uuid",
+        "github.com/gofrs/uuid"
+      ]
+    }
+  },
+  "allowed": {
+    "go": [
+      "github.com/adrg/xdg",
+      "github.com/pelletier/go-toml/v2",
+      "modernc.org/sqlite",
+      "github.com/spf13/cobra",
+      "github.com/spf13/pflag",
+      "github.com/inconshreveable/mousetrap"
+    ]
+  },
+  "min_version_age_hours": 72,
+  "allow_unresolved_versions": false
+}

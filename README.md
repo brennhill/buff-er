@@ -72,7 +72,7 @@ Create `~/.config/buff-er/config.toml` to customize:
 ```toml
 enabled = true
 min_trigger_minutes = 3.0    # minimum estimated time to trigger suggestion
-break_cooldown_minutes = 30  # minutes between break suggestions
+break_cooldown_minutes = 52  # minutes between break suggestions (based on 52/17 research)
 
 # Override the default exercise catalog
 [[exercises]]

@@ -17,8 +17,8 @@ func TestLoadMissingFile(t *testing.T) {
 	if cfg.MinTriggerMinutes != 3.0 {
 		t.Errorf("MinTriggerMinutes = %f, want 3.0", cfg.MinTriggerMinutes)
 	}
-	if cfg.BreakCooldownMinutes != 30 {
-		t.Errorf("BreakCooldownMinutes = %d, want 30", cfg.BreakCooldownMinutes)
+	if cfg.BreakCooldownMinutes != 52 {
+		t.Errorf("BreakCooldownMinutes = %d, want 52", cfg.BreakCooldownMinutes)
 	}
 }
 
@@ -145,7 +145,7 @@ func TestDefaultConfig(t *testing.T) {
 	if cfg.MinTriggerMinutes != 3.0 {
 		t.Error("default MinTriggerMinutes should be 3.0")
 	}
-	if cfg.BreakCooldownMinutes != 30 {
+	if cfg.BreakCooldownMinutes != 52 {
 		t.Error("default BreakCooldownMinutes should be 30")
 	}
 	if len(cfg.Exercises) != 0 {

@@ -30,7 +30,7 @@ func DefaultConfig() Config {
 	return Config{
 		Enabled:              true,
 		MinTriggerMinutes:    3.0,
-		BreakCooldownMinutes: 30,
+		BreakCooldownMinutes: 52,
 	}
 }
 
