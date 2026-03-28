@@ -1,6 +1,17 @@
-# buff-er
+<p align="center">
+  <img src="assets/logo-1-dumbbell-terminal.svg" alt="buff-er logo" width="400">
+</p>
 
-Get buff while you buffer. Exercise nudges during AI wait times.
+<h1 align="center">buff-er</h1>
+<p align="center">Get buff while you buffer. Exercise nudges during AI wait times.</p>
+
+<p align="center">
+  <a href="https://github.com/brennhill/buff-er/releases/latest"><img src="https://img.shields.io/github/v/release/brennhill/buff-er?style=flat-square" alt="Release"></a>
+  <a href="https://github.com/brennhill/buff-er/actions"><img src="https://img.shields.io/github/actions/workflow/status/brennhill/buff-er/ci.yml?style=flat-square" alt="CI"></a>
+  <a href="https://github.com/brennhill/buff-er/blob/main/LICENSE"><img src="https://img.shields.io/github/license/brennhill/buff-er?style=flat-square" alt="License"></a>
+</p>
+
+---
 
 buff-er is a [Claude Code](https://docs.anthropic.com/en/docs/claude-code) hook that learns how long your commands take, then suggests quick exercises when you'll be waiting a few minutes. It also nudges you to move if you've been coding for a long stretch without a break.
 
@@ -24,12 +35,25 @@ buff-er: Done! Did you get that exercise in? (you know the answer)
 
 ## Install
 
+### Quick install (recommended)
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/brennhill/buff-er/main/install.sh | sh
+buff-er install
+```
+
+### From source
+
 ```bash
 go install github.com/brennhill/buff-er/cmd/buff-er@latest
 buff-er install
 ```
 
-Verify with:
+### Manual download
+
+Grab the binary for your platform from [Releases](https://github.com/brennhill/buff-er/releases/latest), put it in your PATH, then run `buff-er install`.
+
+### Verify
 
 ```bash
 buff-er doctor

@@ -7,10 +7,14 @@ import (
 	"github.com/spf13/cobra"
 )
 
+// version is set at build time via ldflags.
+var version = "dev"
+
 var rootCmd = &cobra.Command{
-	Use:   "buff-er",
-	Short: "Get buff while you buffer",
-	Long:  "Exercise nudges during AI wait times. Learns your build times, suggests exercises when you'll be waiting.",
+	Use:     "buff-er",
+	Short:   "Get buff while you buffer",
+	Long:    "Exercise nudges during AI wait times. Learns your build times, suggests exercises when you'll be waiting.",
+	Version: version,
 }
 
 func main() {
