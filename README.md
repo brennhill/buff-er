@@ -99,3 +99,7 @@ Timing data uses a 3-day sliding window — old records are pruned automatically
 - **Learns, doesn't guess** — no suggestions until it has real timing data for your project
 - **Fails silently** — errors show a brief message but never break your workflow
 - **Single binary** — no runtime dependencies, no node_modules, no venv
+
+---
+
+Idea by David Berman.
