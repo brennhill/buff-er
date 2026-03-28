@@ -52,6 +52,11 @@ go test ./... -count=1
 golangci-lint run ./...
 govulncheck ./...
 nilaway ./...
+sloppy-joe check
 ```
 
-All five must pass before committing. The pre-commit hook runs them automatically.
+All six must pass before committing. The pre-commit hook runs them automatically.
+
+## Adding Dependencies
+
+All new Go dependencies are checked by [sloppy-joe](https://github.com/brennhill/sloppy-joe) for supply chain attacks (typosquatting, hallucinated packages, new/unvetted versions). If you add a legitimate dependency that gets flagged, add it to `~/.config/sloppy-joe/config.json` in the `allowed.go` list. The CI config in `.github/workflows/ci.yml` also has an allow list that must be updated.

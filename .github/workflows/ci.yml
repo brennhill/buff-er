@@ -28,3 +28,25 @@ jobs:
         run: |
           go install github.com/golangci/golangci-lint/cmd/golangci-lint@latest
           golangci-lint run ./...
+
+      - name: Supply chain check
+        run: |
+          cargo install sloppy-joe
+          mkdir -p /tmp/sj
+          cat > /tmp/sj/config.json << 'EOF'
+          {
+            "allowed": {
+              "go": [
+                "github.com/adrg/xdg",
+                "github.com/pelletier/go-toml/v2",
+                "modernc.org/sqlite",
+                "github.com/spf13/cobra",
+                "github.com/spf13/pflag",
+                "github.com/inconshreveable/mousetrap"
+              ]
+            },
+            "min_version_age_hours": 72,
+            "allow_unresolved_versions": false
+          }
+          EOF
+          SLOPPY_JOE_CONFIG=/tmp/sj/config.json sloppy-joe check
