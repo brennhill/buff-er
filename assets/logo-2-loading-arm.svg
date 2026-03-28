@@ -1,0 +1,44 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 200" width="400" height="200">
+  <defs>
+    <linearGradient id="progress-bg" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" style="stop-color:#1e1b4b;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#1e1b4b;stop-opacity:1" />
+    </linearGradient>
+    <linearGradient id="progress-fill" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" style="stop-color:#7c3aed;stop-opacity:1" />
+      <stop offset="60%" style="stop-color:#a78bfa;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#c4b5fd;stop-opacity:1" />
+    </linearGradient>
+  </defs>
+
+  <!-- Background -->
+  <rect width="400" height="200" rx="16" fill="#0f0d1a"/>
+
+  <!-- Progress bar background -->
+  <rect x="40" y="55" width="320" height="30" rx="15" fill="#1e1b4b" stroke="#312e81" stroke-width="1"/>
+
+  <!-- Progress bar fill (~70%) -->
+  <rect x="40" y="55" width="224" height="30" rx="15" fill="url(#progress-fill)"/>
+
+  <!-- Muscular arm silhouette emerging from the progress bar end -->
+  <!-- Upper arm -->
+  <path d="M255,70 Q270,40 280,35 Q295,30 300,45 Q305,55 295,65 Q285,70 275,70 Z" fill="#a78bfa"/>
+  <!-- Bicep bulge -->
+  <ellipse cx="285" cy="42" rx="12" ry="10" fill="#c4b5fd" opacity="0.7"/>
+  <!-- Forearm -->
+  <path d="M300,45 Q310,38 325,32 Q335,28 340,35 Q338,42 330,48 Q320,52 305,55 Q298,55 300,45 Z" fill="#a78bfa"/>
+  <!-- Fist -->
+  <circle cx="338" cy="33" r="8" fill="#c4b5fd"/>
+
+  <!-- Progress percentage -->
+  <text x="140" y="76" font-family="monospace" font-size="14" font-weight="bold" fill="#e0e7ff">building...</text>
+
+  <!-- Text -->
+  <text x="200" y="125" font-family="monospace" font-size="32" font-weight="bold" fill="#e0e7ff" text-anchor="middle">buff-er</text>
+  <text x="200" y="152" font-family="monospace" font-size="12" fill="#7c3aed" text-anchor="middle">get buff while you buffer</text>
+
+  <!-- Small terminal dots -->
+  <circle cx="55" cy="178" r="4" fill="#ef4444" opacity="0.8"/>
+  <circle cx="70" cy="178" r="4" fill="#eab308" opacity="0.8"/>
+  <circle cx="85" cy="178" r="4" fill="#22c55e" opacity="0.8"/>
+</svg>
