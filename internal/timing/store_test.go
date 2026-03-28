@@ -120,3 +120,44 @@ func TestStoreState(t *testing.T) {
 		t.Errorf("GetState = %q, want 2024-01-01T00:00:00Z", val)
 	}
 }
+
+func TestPruneStateOnlyRemovesOldSessions(t *testing.T) {
+	store, err := OpenStore(t.TempDir(), "test-project")
+	if err != nil {
+		t.Fatalf("OpenStore: %v", err)
+	}
+	defer func() { _ = store.Close() }()
+
+	// Set a stale session (4 days old) and a fresh one (now)
+	staleTime := time.Now().Add(-4 * 24 * time.Hour).Format(time.RFC3339)
+	freshTime := time.Now().Format(time.RFC3339)
+
+	if err := store.SetState("session_start_stale-session", staleTime); err != nil {
+		t.Fatal(err)
+	}
+	if err := store.SetState("session_start_active-session", freshTime); err != nil {
+		t.Fatal(err)
+	}
+
+	if err := store.PruneState(); err != nil {
+		t.Fatal(err)
+	}
+
+	// Stale session should be gone
+	val, err := store.GetState("session_start_stale-session")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if val != "" {
+		t.Errorf("stale session should have been pruned, got %q", val)
+	}
+
+	// Active session should remain
+	val, err = store.GetState("session_start_active-session")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if val == "" {
+		t.Error("active session should NOT have been pruned")
+	}
+}

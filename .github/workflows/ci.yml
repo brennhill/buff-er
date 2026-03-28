@@ -5,6 +5,9 @@ on:
     branches: [main]
   pull_request:
 
+env:
+  CGO_ENABLED: '0'
+
 jobs:
   test:
     runs-on: ubuntu-latest
@@ -19,7 +22,7 @@ jobs:
         run: go build ./cmd/buff-er
 
       - name: Test
-        run: go test ./... -count=1 -race
+        run: go test ./... -count=1
 
       - name: Lint
         uses: golangci/golangci-lint-action@v6

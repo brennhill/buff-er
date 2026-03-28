@@ -30,12 +30,7 @@ func main() {
 }
 
 func isHookInvocation() bool {
-	for _, arg := range os.Args {
-		if arg == "hook" {
-			return true
-		}
-	}
-	return false
+	return len(os.Args) > 1 && os.Args[1] == "hook"
 }
 
 func init() {

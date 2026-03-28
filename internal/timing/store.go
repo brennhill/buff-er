@@ -165,9 +165,11 @@ func (s *Store) GetState(key string) (string, error) {
 	return value, err
 }
 
-// PruneState removes session_start_ keys older than the prune window.
+// PruneState removes session_start_ keys whose stored timestamp is older than the prune window,
+// preserving active sessions.
 func (s *Store) PruneState() error {
-	_, err := s.db.Exec("DELETE FROM state WHERE key LIKE 'session_start_%'")
+	cutoff := time.Now().Add(-pruneAge).Format(time.RFC3339)
+	_, err := s.db.Exec("DELETE FROM state WHERE key LIKE 'session_start_%' AND value < ?", cutoff)
 	return err
 }
 
