@@ -1,45 +1,43 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 200" width="400" height="200">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 480 200" width="480" height="200">
   <defs>
     <linearGradient id="text-grad" x1="0%" y1="0%" x2="100%" y2="0%">
-      <stop offset="0%" style="stop-color:#e0e7ff;stop-opacity:1" />
-      <stop offset="60%" style="stop-color:#c7d2fe;stop-opacity:1" />
-      <stop offset="100%" style="stop-color:#a5b4fc;stop-opacity:1" />
-    </linearGradient>
-    <linearGradient id="arm-grad" x1="0%" y1="0%" x2="100%" y2="0%">
-      <stop offset="0%" style="stop-color:#7c3aed;stop-opacity:1" />
-      <stop offset="100%" style="stop-color:#a78bfa;stop-opacity:1" />
+      <stop offset="0%" style="stop-color:#e0e7ff" />
+      <stop offset="60%" style="stop-color:#c7d2fe" />
+      <stop offset="100%" style="stop-color:#a5b4fc" />
     </linearGradient>
   </defs>
 
   <!-- Background -->
-  <rect width="400" height="200" rx="16" fill="#0f0d1a"/>
-
-  <!-- "buff" in bold monospace -->
-  <text x="68" y="105" font-family="monospace" font-size="60" font-weight="900" fill="url(#text-grad)">buff</text>
-
-  <!-- Hyphen as a flexed arm -->
-  <!-- The hyphen/dash connects "buff" to "er" but is shaped like a bicep -->
-  <!-- Upper arm (horizontal bar going right) -->
-  <path d="M232,88 Q245,88 255,78 Q262,70 268,62" stroke="url(#arm-grad)" stroke-width="6" fill="none" stroke-linecap="round"/>
-  <!-- Bicep bulge -->
-  <ellipse cx="258" cy="68" rx="8" ry="6" fill="#a78bfa" opacity="0.6"/>
-  <!-- Forearm coming back down -->
-  <path d="M268,62 Q275,55 280,60 Q282,65 278,72 Q272,80 268,85" stroke="url(#arm-grad)" stroke-width="6" fill="none" stroke-linecap="round"/>
-  <!-- Small fist -->
-  <circle cx="280" cy="60" r="5" fill="#c4b5fd"/>
-
-  <!-- "er" continuing after the arm -->
-  <text x="278" y="105" font-family="monospace" font-size="60" font-weight="900" fill="url(#text-grad)">er</text>
-
-  <!-- Subtitle -->
-  <text x="200" y="145" font-family="monospace" font-size="12" fill="#6366f1" text-anchor="middle">get buff while you buffer</text>
-
-  <!-- Terminal cursor blinking effect -->
-  <rect x="185" y="158" width="8" height="16" fill="#6366f1" opacity="0.7">
-    <animate attributeName="opacity" values="0.7;0;0.7" dur="1.2s" repeatCount="indefinite"/>
-  </rect>
+  <rect width="480" height="200" rx="16" fill="#0f0d1a"/>
 
   <!-- Subtle code brackets -->
-  <text x="25" y="105" font-family="monospace" font-size="48" fill="#1e1b4b" font-weight="300">{</text>
-  <text x="365" y="105" font-family="monospace" font-size="48" fill="#1e1b4b" font-weight="300">}</text>
+  <text x="18" y="108" font-family="monospace" font-size="52" fill="#1e1b4b" font-weight="300">{</text>
+  <text x="442" y="108" font-family="monospace" font-size="52" fill="#1e1b4b" font-weight="300">}</text>
+
+  <!-- "buff" text -->
+  <text x="58" y="108" font-family="monospace" font-size="64" font-weight="900" fill="url(#text-grad)">buff</text>
+
+  <!-- Flexing arm as the hyphen — classic bicep curl silhouette -->
+  <!-- This is a proper side-view flexed arm: shoulder on left, fist pointing up-right -->
+  <!-- Shoulder joint -->
+  <circle cx="274" cy="94" r="5" fill="#7c3aed"/>
+  <!-- Upper arm going up-right to elbow -->
+  <path d="M274,94 L290,60" stroke="#7c3aed" stroke-width="8" stroke-linecap="round" fill="none"/>
+  <!-- Bicep muscle bulge -->
+  <ellipse cx="280" cy="72" rx="10" ry="7" fill="#a78bfa" transform="rotate(-30, 280, 72)"/>
+  <!-- Forearm coming back left from elbow to fist -->
+  <path d="M290,60 L268,48" stroke="#7c3aed" stroke-width="7" stroke-linecap="round" fill="none"/>
+  <!-- Fist -->
+  <circle cx="266" cy="47" r="6" fill="#a78bfa"/>
+
+  <!-- "er" text -->
+  <text x="300" y="108" font-family="monospace" font-size="64" font-weight="900" fill="url(#text-grad)">er</text>
+
+  <!-- Subtitle -->
+  <text x="240" y="148" font-family="monospace" font-size="13" fill="#6366f1" text-anchor="middle">get buff while you buffer</text>
+
+  <!-- Blinking terminal cursor -->
+  <rect x="228" y="158" width="8" height="16" fill="#6366f1" opacity="0.7">
+    <animate attributeName="opacity" values="0.7;0;0.7" dur="1.2s" repeatCount="indefinite"/>
+  </rect>
 </svg>
