@@ -121,6 +121,30 @@ func TestStoreState(t *testing.T) {
 	}
 }
 
+func TestStoreWALModeAndBusyTimeout(t *testing.T) {
+	store, err := OpenStore(t.TempDir(), "test-wal")
+	if err != nil {
+		t.Fatalf("OpenStore: %v", err)
+	}
+	defer func() { _ = store.Close() }()
+
+	var journalMode string
+	if err := store.db.QueryRow("PRAGMA journal_mode").Scan(&journalMode); err != nil {
+		t.Fatalf("query journal_mode: %v", err)
+	}
+	if journalMode != "wal" {
+		t.Errorf("journal_mode = %q, want %q", journalMode, "wal")
+	}
+
+	var busyTimeout int
+	if err := store.db.QueryRow("PRAGMA busy_timeout").Scan(&busyTimeout); err != nil {
+		t.Fatalf("query busy_timeout: %v", err)
+	}
+	if busyTimeout != 5000 {
+		t.Errorf("busy_timeout = %d, want 5000", busyTimeout)
+	}
+}
+
 func TestPruneStateOnlyRemovesOldSessions(t *testing.T) {
 	store, err := OpenStore(t.TempDir(), "test-project")
 	if err != nil {
