@@ -56,3 +56,31 @@ func (p *PendingStore) Get(toolUseID string) (*PendingEntry, error) {
 	_ = os.Remove(path) // clean up after reading
 	return &entry, nil
 }
+
+// CleanupStale removes pending entries older than 1 hour from all sessions.
+func CleanupStale() {
+	pattern := filepath.Join(os.TempDir(), "buff-er-*")
+	dirs, err := filepath.Glob(pattern)
+	if err != nil {
+		return
+	}
+	cutoff := time.Now().Add(-1 * time.Hour)
+	for _, dir := range dirs {
+		entries, err := os.ReadDir(dir)
+		if err != nil {
+			continue
+		}
+		allRemoved := true
+		for _, e := range entries {
+			info, err := e.Info()
+			if err != nil || info.ModTime().After(cutoff) {
+				allRemoved = false
+				continue
+			}
+			_ = os.Remove(filepath.Join(dir, e.Name()))
+		}
+		if allRemoved {
+			_ = os.Remove(dir)
+		}
+	}
+}

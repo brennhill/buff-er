@@ -2,7 +2,7 @@ package hook
 
 import (
 	"encoding/json"
-	"fmt"
+	"os"
 )
 
 // Output represents the hook response written to stdout.
@@ -12,6 +12,7 @@ type Output struct {
 
 // WriteOutput writes the hook response as JSON to stdout.
 // Returns nil if the output is empty (no-op).
+// stdout must remain clean JSON only — all logging goes to stderr.
 func WriteOutput(out *Output) error {
 	if out == nil || out.SystemMessage == "" {
 		return nil
@@ -20,6 +21,7 @@ func WriteOutput(out *Output) error {
 	if err != nil {
 		return err
 	}
-	_, err = fmt.Println(string(data))
+	data = append(data, '\n')
+	_, err = os.Stdout.Write(data)
 	return err
 }

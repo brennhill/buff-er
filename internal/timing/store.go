@@ -37,11 +37,15 @@ func OpenStore(dataDir, projectHash string) (*Store, error) {
 		return nil, fmt.Errorf("open db: %w", err)
 	}
 
-	// Enable WAL mode for concurrent access
-	if _, err := db.Exec("PRAGMA journal_mode=WAL"); err != nil {
+	// Enable WAL mode for concurrent access and set busy timeout
+	// so concurrent writers wait instead of failing immediately
+	if _, err := db.Exec("PRAGMA journal_mode=WAL; PRAGMA busy_timeout=5000"); err != nil {
 		_ = db.Close()
-		return nil, fmt.Errorf("set WAL mode: %w", err)
+		return nil, fmt.Errorf("set pragmas: %w", err)
 	}
+
+	db.SetMaxOpenConns(1)
+	db.SetMaxIdleConns(1)
 
 	if err := initSchema(db); err != nil {
 		_ = db.Close()
@@ -80,10 +84,9 @@ func (s *Store) Record(pattern string, startedAt time.Time, durationMs int64) er
 
 // TimingStats holds statistics for a command pattern.
 type TimingStats struct {
-	Count       int
-	AvgMs       int64
-	P75Ms       int64
-	SampleCount int
+	Count int
+	AvgMs int64
+	P75Ms int64
 }
 
 // QueryStats returns timing statistics for a command pattern within the sliding window.
@@ -120,16 +123,19 @@ func (s *Store) QueryStats(pattern string) (*TimingStats, error) {
 		sum += d
 	}
 
-	p75Idx := len(durations) * 75 / 100
+	// Nearest-rank P75: ceil(0.75 * n) - 1
+	p75Idx := (len(durations)*75 + 99) / 100
+	if p75Idx > 0 {
+		p75Idx--
+	}
 	if p75Idx >= len(durations) {
 		p75Idx = len(durations) - 1
 	}
 
 	return &TimingStats{
-		Count:       len(durations),
-		AvgMs:       sum / int64(len(durations)),
-		P75Ms:       durations[p75Idx],
-		SampleCount: len(durations),
+		Count: len(durations),
+		AvgMs: sum / int64(len(durations)),
+		P75Ms: durations[p75Idx],
 	}, nil
 }
 
@@ -157,6 +163,12 @@ func (s *Store) GetState(key string) (string, error) {
 		return "", nil
 	}
 	return value, err
+}
+
+// PruneState removes session_start_ keys older than the prune window.
+func (s *Store) PruneState() error {
+	_, err := s.db.Exec("DELETE FROM state WHERE key LIKE 'session_start_%'")
+	return err
 }
 
 // Close closes the database connection.
