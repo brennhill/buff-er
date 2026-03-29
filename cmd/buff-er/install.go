@@ -8,6 +8,7 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/brennhill/buff-er/internal/notify"
 	"github.com/spf13/cobra"
 )
 
@@ -157,6 +158,14 @@ func runInstall(_ *cobra.Command, _ []string) error {
 
 	fmt.Printf("buff-er: installed hooks in %s\n", settingsFile)
 	fmt.Printf("buff-er: using binary at %s\n", binPath)
+
+	if err := notify.InstallApp(); err != nil {
+		fmt.Printf("buff-er: notification app not installed: %v\n", err)
+		fmt.Println("buff-er: notifications will fall back to osascript")
+	} else {
+		fmt.Println("buff-er: notification app installed to ~/Applications/buff-er.app")
+	}
+
 	fmt.Println("buff-er: ready! Exercise suggestions will appear during long-running commands.")
 	return nil
 }
@@ -227,6 +236,13 @@ func runUninstall(_ *cobra.Command, _ []string) error {
 	}
 
 	fmt.Printf("buff-er: removed %d hook(s) from %s\n", removed, settingsFile)
+
+	if err := notify.UninstallApp(); err != nil {
+		fmt.Printf("buff-er: could not remove notification app: %v\n", err)
+	} else {
+		fmt.Println("buff-er: removed notification app")
+	}
+
 	return nil
 }
 

@@ -1,18 +1,17 @@
+version: "2"
+
 run:
   timeout: 5m
 
 linters:
   enable-all: true
   disable:
-    # Deprecated
-    - tenv            # replaced by usetesting
-
     # Too noisy / opinionated for this project
     - depguard
     - exhaustruct     # requires all struct fields — too strict for JSON parsing
     - gochecknoglobals # cobra requires globals
     - gochecknoinits   # cobra requires init()
-    - lll             # line length — gofumpt handles formatting
+    - lll             # line length
     - varnamelen      # too opinionated on short var names
     - wsl             # whitespace linter — too noisy
     - nlreturn        # blank line before return — too noisy
@@ -26,8 +25,6 @@ linters:
     - nonamedreturns  # named returns are fine when clear
     - tagliatelle     # wants camelCase JSON tags but Claude Code API uses snake_case
     - tagalign        # struct tag alignment — cosmetic
-    - stylecheck      # package comments not needed for internal packages
-    - gofumpt         # conflicts with default gofmt
     - godot           # comment periods — cosmetic
     - prealloc        # premature optimization
     - perfsprint      # premature optimization
@@ -37,7 +34,6 @@ linters:
     - musttag         # struct tag validation — too strict
     - nilnil          # nil,nil returns are fine for "not found" semantics
     - nestif          # nested if complexity — trust judgment
-    - gci             # import ordering — cosmetic
     - goconst         # repeated strings as constants — overkill for small project
 
 linters-settings:
